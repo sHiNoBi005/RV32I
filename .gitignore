@@ -1,0 +1,11 @@
+# Simulation output
+sim/*
+
+# VCD waveform files
+*.vcd
+
+# Icarus simulation executables
+*.vvp
+
+# macOS files
+.DS_Store
