@@ -16,7 +16,7 @@ input [24:20] Rs2; //5 bit input for second source register
 input [11:7] Rd; //5 bit input for destination register
 input [31:0] Write_data; //32 bit input for data to be written to destination register
 
-output [31:0] Read_data1, Read_data2; //32 bit outputs for data read from source registers
+output reg[31:0] Read_data1, Read_data2; //32 bit outputs for data read from source registers
 
 reg [31:0] registers [31:0]; //32 registers of 32 bits each
 integer i;
