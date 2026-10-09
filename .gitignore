@@ -1,0 +1,8 @@
+# Simulation output
+sim/*
+
+# VCD waveform files
+*.vcd
+
+# Icarus simulation executables
+*.vvp
