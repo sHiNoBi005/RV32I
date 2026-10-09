@@ -6,3 +6,6 @@ sim/*
 
 # Icarus simulation executables
 *.vvp
+
+# macOS files
+.DS_Store
