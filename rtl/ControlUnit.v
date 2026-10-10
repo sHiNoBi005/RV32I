@@ -37,29 +37,37 @@ always @(*) begin
 
         // R-type instructions
         7'b0110011: begin
-            RegWrite = 1'b1;
-
             case (func3)
 
                 // ADD/SUB
                 3'b000: begin
                     case (func7)
-                        7'b0000000: ALUControlOut = 4'b0010; // ADD
-                        7'b0100000: ALUControlOut = 4'b0110; // SUB
+                        7'b0000000: begin
+                            ALUControlOut = 4'b0010; // ADD
+                            RegWrite = 1'b1;
+                        end
+                        7'b0100000: begin
+                            ALUControlOut = 4'b0110; // SUB
+                            RegWrite = 1'b1;
+                        end
                         default:    ALUControlOut = 4'b1111;
                     endcase
                 end
 
                 // OR
                 3'b110: begin
-                    if (func7 == 7'b0000000)
+                    if (func7 == 7'b0000000) begin
                         ALUControlOut = 4'b0001;
+                        RegWrite = 1'b1;
+                    end
                 end
 
                 // AND
                 3'b111: begin
-                    if (func7 == 7'b0000000)
+                    if (func7 == 7'b0000000) begin
                         ALUControlOut = 4'b0000;
+                        RegWrite = 1'b1;
+                    end
                 end
 
                 default: ALUControlOut = 4'b1111;

@@ -79,7 +79,7 @@ module ControlUnit_tb;
 
     // Unsupported instruction encodings use safe defaults.
     check_controls(7'b0110011, 3'b001, 7'b0000000,
-                   1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 1'b1, 4'b1111);
+                   1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 4'b1111);
     check_controls(7'b0000011, 3'b000, 7'b0000000,
                    1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 4'b1111);
 
