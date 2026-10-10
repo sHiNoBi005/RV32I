@@ -35,23 +35,27 @@ module ProgramCounter_tb;
         // Release reset
         reset = 0;
 
+        $display("Timestamp: %0t | PC_out: %h", $time, PC_out);
         // Test PC = 4
         PC_in = 32'h00000004;
         #10;
 
+        $display("Timestamp: %0t | PC_out: %h", $time, PC_out);
         // Test PC = 8
         PC_in = 32'h00000008;
         #10;
 
+        $display("Timestamp: %0t | PC_out: %h", $time, PC_out);
         // Test PC = 12
         PC_in = 32'h0000000C;
         #10;
 
+        $display("Timestamp: %0t | PC_out: %h", $time, PC_out);
         // Test PC = 16
         PC_in = 32'h00000010;
         #10;
 
-        $display("Program Counter test completed.");
+        $display("Timestamp: %0t | PC_out: %h", $time, PC_out);
 
         $finish;
     end
