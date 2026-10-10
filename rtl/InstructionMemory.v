@@ -1,24 +1,16 @@
 module InstructionMemory(
-    address,
-    reset,
-    instruction
+    input [31:0] address,
+    output [31:0] instruction
 );
-    //making memory
 
-    reg[31:0] memory[0:255] ; //instruction memory with 256 registers ,each 32 bits wide
+    reg [31:0] memory [0:255];
 
-    input [31:0] address;
-    input reset;
-    output [31:0] instruction;
-
-    assign instruction=memory[address[9:2]];
-    integer k;
-    always @(posedge reset)
-    begin
-        for(k=0;k<256;k=k+1)
-        begin
-            memory[k]=32'h00000000;
-        end
+    // Load the program at simulation startup
+    initial begin
+        $readmemh("instructions.mem", memory);
     end
+
+    // Fetch the instruction at the given byte address
+    assign instruction = memory[address[9:2]];
 
 endmodule

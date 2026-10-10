@@ -1,34 +1,26 @@
-module ALU(
-    A,
-    B,
-    zero,
-    ALUControl_in,
-    ALU_result
-);
-input [31:0] A,B;
-input [3:0] ALUControl_in;
-output reg [31:0] ALU_result;
-output reg zero;
 
-always @ (*)
-begin
-    case(ALUControl_in)
-    4'b0000 : begin zero <=0;
-                ALU_result <= A & B;
-              end
-    4'b0001 : begin zero <=0;
-                ALU_result <= A | B;
-              end
-    4'b0010 : begin zero <=0;
-                ALU_result <= A + B;
-              end
-    4'b0110 : begin zero <=0;
-                ALU_result <= A - B;
-              end
-    default : begin zero <=0;
-                ALU_result<=A;
-              end
+module ALU(
+    input [31:0] A,
+    input [31:0] B,
+    input [3:0] ALUControl_in,
+    output reg [31:0] ALU_result,
+    output reg zero
+);
+
+always @(*) begin
+    case (ALUControl_in)
+
+        4'b0000: ALU_result = A & B; // AND
+        4'b0001: ALU_result = A | B; // OR
+        4'b0010: ALU_result = A + B; // ADD
+        4'b0110: ALU_result = A - B; // SUB
+
+        default: ALU_result = 32'b0;
 
     endcase
+
+    zero = (ALU_result == 32'b0);
 end
+
 endmodule
+  
