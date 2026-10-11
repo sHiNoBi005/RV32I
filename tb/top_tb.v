@@ -41,9 +41,11 @@ module Top_tb;
         // Seed memory for the SW and LW integration tests.
         dut.register_file.registers[16] = 32'h00000080;
         dut.register_file.registers[17] = 32'hFFFF80FF;
+        // JALR uses this odd address to verify that target bit 0 is cleared.
+        dut.register_file.registers[21] = 32'd1;
 
         // Allow each instruction to execute and write back.
-        for (i = 0; i < 19; i = i + 1) begin
+        for (i = 0; i < 22; i = i + 1) begin
             @(posedge clk);
             #1;
 
@@ -160,13 +162,22 @@ module Top_tb;
                      $display("Final LW integration test passed");
                  end
 
+                21: begin
+                    if (PC_out !== 32'd0)
+                        $fatal(1, "JALR target alignment/PC redirect failed: PC=%h", PC_out);
+                    if (dut.register_file.registers[20] !== 32'd88)
+                        $fatal(1, "JALR link write-back failed: x20=%h",
+                               dut.register_file.registers[20]);
+                    $display("JALR integration test passed");
+                end
+
             endcase
 
             $display("Instruction %0d passed: PC=%h, instruction=%h",
                      i, PC_out, instruction);
         end
 
-        $display("PASS: All 18 integration tests passed.");
+        $display("PASS: Integration tests completed, including JALR.");
         $finish;
     end
 
