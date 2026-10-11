@@ -44,7 +44,7 @@ flowchart TD
     IM --> DEC["Decode instruction fields<br/>opcode, rs1, rs2, rd, function bits"]
 
     DEC --> CU["Control Unit<br/>operation and control signals"]
-    DEC --> RF["Register File<br/>read rs1 and rs2"]
+    DEC --> RF["Register File<br/>read rs1/rs2; write rd on clock edge"]
     DEC --> IG["Immediate Generator<br/>build immediate or offset"]
 
     CU --> ALUSetup["Select ALU operation and operands"]
