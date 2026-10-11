@@ -64,7 +64,8 @@ flowchart TD
     DM -- "loaded data" --> WB
     PC4["PC + 4<br/>return address for JAL/JALR"] --> WB
     CU -- "RegWrite and result selection" --> WB
-    WB --> RFWrite["At rising clock edge:<br/>write rd when RegWrite is enabled"]
+    WB -- "write data" --> RF
+    CU -- "RegWrite enable" --> RF
 
     PC --> PC4
     PC --> BT["Branch/JAL target calculation<br/>current PC + immediate"]
