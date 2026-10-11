@@ -50,7 +50,7 @@ module ControlUnit_tb;
           ALUScr !== expected_alu_src ||
           RegWrite !== expected_reg_write ||
           ALUControlOut !== expected_alu_control) begin
-        $display("FAIL: opcode=%b func3=%b func7=%b", opcode, funct3, funct7);
+        $display("FAIL: opcode=%b func3=%b func7=%b", opcode, funct3, func7);
         $display("  Expected: branch=%b MemRead=%b MemtoReg=%b MemWrite=%b ALUScr=%b RegWrite=%b ALUControl=%b",
                  expected_branch, expected_mem_read, expected_mem_to_reg,
                  expected_mem_write, expected_alu_src, expected_reg_write,
@@ -146,6 +146,16 @@ module ControlUnit_tb;
 
     check_controls(7'b0000011, 3'b101, 7'b0000000,
                    1'b0, 1'b1, 1'b1, 1'b0, 1'b1, 1'b1, 4'b0010); // LHU
+
+    // Store instructions: no memory read or register write; calculate address with ADD.
+    check_controls(7'b0100011, 3'b000, 7'b0000000,
+                   1'b0, 1'b0, 1'b0, 1'b1, 1'b1, 1'b0, 4'b0010); // SB
+
+    check_controls(7'b0100011, 3'b001, 7'b0000000,
+                   1'b0, 1'b0, 1'b0, 1'b1, 1'b1, 1'b0, 4'b0010); // SH
+
+    check_controls(7'b0100011, 3'b010, 7'b0000000,
+                   1'b0, 1'b0, 1'b0, 1'b1, 1'b1, 1'b0, 4'b0010); // SW
 
     // Unsupported instruction encodings use safe defaults.
     check_controls(7'b0110011, 3'b001, 7'b0100000,
