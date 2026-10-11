@@ -1,14 +1,38 @@
-002081B3
-40208233
-002092B3
-00112333
-001133B3
-0020C433
-0020D4B3
-40F75533
-0020E5B3
-0020F633
+002081B3  // ADD  x3,  x1,  x2     ; x3  = x1 + x2
+
+40208233  // SUB  x4,  x1,  x2     ; x4  = x1 - x2
+
+002092B3  // SLL  x5,  x1,  x2     ; x5  = x1 << x2[4:0]
+
+00112333  // SLT  x6,  x2,  x1     ; x6  = signed(x2) < signed(x1)
+
+001133B3  // SLTU x7,  x2,  x1     ; x7  = unsigned(x2) < unsigned(x1)
+
+0020C433  // XOR  x8,  x1,  x2     ; x8  = x1 ^ x2
+
+0020D4B3  // SRL  x9,  x1,  x2     ; x9  = x1 >> x2[4:0]
+
+40F75533  // SRA  x10, x14, x15    ; x10 = signed(x14) >>> x15[4:0]
+
+0020E5B3  // OR   x11, x1,  x2     ; x11 = x1 | x2
+
+0020F633  // AND  x12, x1,  x2     ; x12 = x1 & x2
 
 //
-0020A023
-0000A683
+0020A023 // SW x2, 0(x1), Store the value in register x2 at the memory address held in x1.
+
+0000A683 // LW x13, 0(x1), Load that memory value into register x13.
+
+010080A3 // SB x16, 1(x1), Store byte 0x80 at address 21
+
+00108683 // LB x13, 1(x1), x13 = 0xFFFFFF80
+
+0010C683 // LBU x13, 1(x1), x13 = 0x00000080
+
+01109123 // SH x17, 2(x1), Store halfword 0x80FF at address 22
+
+00209683 // LH x13, 2(x1), x13 = 0xFFFF80FF 
+
+0020D683 // LHU x13, 2(x1), x13 = 0x000080FF
+
+0000A683 // LW x13, 0(x1), x13 = 0x80FF8003
