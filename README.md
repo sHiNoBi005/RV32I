@@ -40,37 +40,43 @@ The flowchart below shows the main path. Some work happens in parallel: for exam
 
 ```mermaid
 flowchart TD
-    A["Program Counter (PC)<br/>holds current instruction address"] --> B["Instruction Memory<br/>fetch 32-bit instruction"]
-    B --> C["Decode instruction fields<br/>opcode, registers, function bits"]
-    C --> D["Control Unit<br/>select operation and control signals"]
-    C --> E["Register File<br/>read rs1 and rs2 values"]
-    C --> F["Immediate Generator<br/>build constant/offset if needed"]
-    D --> G["Execute the instruction"]
-    E --> G
-    F --> G
-    G --> H["ALU<br/>arithmetic, logic, address calculation"]
-    E --> I["Branch Comparator<br/>check branch condition"]
-    D --> I
-    H --> J{"Load or store?"}
-    J -- "Load" --> K["Data Memory<br/>read selected data"]
-    J -- "Store" --> L["Data Memory<br/>write data on clock edge"]
-    J -- "Neither" --> M["Use ALU result"]
-    K --> N["Choose write-back value"]
-    M --> N
-    N --> O["At rising clock edge:<br/>write destination register if enabled"]
-    L --> P["Store completes at clock edge"]
-    O --> Q["Choose next PC"]
-    P --> Q
-    Q --> R{"Which next address?"}
-    R -- "JALR" --> S["rs1 + immediate,<br/>with bit 0 cleared"]
-    R -- "JAL" --> T["current PC + J immediate"]
-    R -- "Taken branch" --> U["current PC + branch offset"]
-    R -- "Otherwise" --> V["current PC + 4"]
-    S --> W["PC updates on rising clock edge"]
-    T --> W
-    U --> W
-    V --> W
-    W --> A
+    PC["Program Counter (PC)<br/>current instruction address"] --> IM["Instruction Memory<br/>fetch 32-bit instruction"]
+    IM --> DEC["Decode instruction fields<br/>opcode, rs1, rs2, rd, function bits"]
+
+    DEC --> CU["Control Unit<br/>operation and control signals"]
+    DEC --> RF["Register File<br/>read rs1 and rs2"]
+    DEC --> IG["Immediate Generator<br/>build immediate or offset"]
+
+    CU --> ALUSetup["Select ALU operation and operands"]
+    RF --> ALUSetup
+    IG --> ALUSetup
+    ALUSetup --> ALU["ALU<br/>arithmetic, logic, address calculation"]
+
+    RF -- "register values + func3" --> BC["Branch Comparator<br/>check the branch condition"]
+    BC -- "branch_taken: true / false" --> NPC
+    CU -- "branch, jump, jalr controls" --> NPC
+
+    ALU --> DM["Data Memory<br/>load reads data; store writes data"]
+    RF -- "store value" --> DM
+    CU -- "MemRead / MemWrite" --> DM
+
+    ALU -- "ALU result" --> WB["Write-back selection"]
+    DM -- "loaded data" --> WB
+    PC4["PC + 4<br/>return address for JAL/JALR"] --> WB
+    CU -- "RegWrite and result selection" --> WB
+    WB --> RFWrite["At rising clock edge:<br/>write rd when RegWrite is enabled"]
+
+    PC --> PC4
+    PC --> BT["Branch/JAL target calculation<br/>current PC + immediate"]
+    IG --> BT
+    BT -- "relative target" --> NPC
+    ALU -- "rs1 + immediate" --> JT["JALR target<br/>clear bit 0"]
+    JT --> NPC
+    PC4 --> NPC
+
+    NPC{"Next-PC selection<br/>JALR has priority, then JAL,<br/>taken branch, otherwise PC + 4"}
+    NPC --> PCUpdate["At rising clock edge:<br/>PC takes the selected next address"]
+    PCUpdate --> PC
 ```
 
 ### The main parts in plain language
