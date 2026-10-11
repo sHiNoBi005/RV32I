@@ -9,11 +9,25 @@ module Top(
     wire [31:0] PC_next;
     wire [31:0] Read_data1, Read_data2, ALU_B;
     wire [31:0] memory_read_data, write_back_data;
-    wire branch, MemRead, MemtoReg, MemWrite, ALUScr, RegWrite;
+    wire branch, jump;
+    wire MemRead, MemtoReg, MemWrite, ALUScr, RegWrite;
+
+    wire br_taken;
+    wire branch_taken;
+
     wire [3:0] ALUControlOut;
     wire [31:0] immediate;
 
-    assign PC_next = PC_out + 32'd4;
+    
+    // Take the branch only when the instruction is a valid
+    // branch and the comparison condition is true.
+    assign branch_taken = branch && br_taken;
+
+    // Select the next PC.
+    assign PC_next = branch_taken
+                ? (PC_out + immediate)
+                : (PC_out + 32'd4);
+
 
     ProgramCounter pc (
         .clk(clk), .reset(reset), .PC_in(PC_next), .PC_out(PC_out)
@@ -28,12 +42,20 @@ module Top(
         .func3(instruction[14:12]),
         .func7(instruction[31:25]),
         .branch(branch),
+        .jump(jump),
         .MemRead(MemRead),
         .MemtoReg(MemtoReg),
         .MemWrite(MemWrite),
         .ALUScr(ALUScr),
         .RegWrite(RegWrite),
         .ALUControlOut(ALUControlOut)
+    );
+
+    BranchComp branch_comparator (
+    .rs1_data(Read_data1),
+    .rs2_data(Read_data2),
+    .func3(instruction[14:12]),
+    .br_taken(br_taken)
     );
 
     Register_File register_file (
