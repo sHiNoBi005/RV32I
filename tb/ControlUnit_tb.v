@@ -157,6 +157,13 @@ module ControlUnit_tb;
     check_controls(7'b0100011, 3'b010, 7'b0000000,
                    1'b0, 1'b0, 1'b0, 1'b1, 1'b1, 1'b0, 4'b0010); // SW
 
+    // U-type instructions: no memory or branch activity; register write enabled.
+    check_controls(7'b0110111, 3'b000, 7'b0000000,
+                   1'b0, 1'b0, 1'b0, 1'b0, 1'b1, 1'b1, 4'b0010); // LUI
+
+    check_controls(7'b0010111, 3'b000, 7'b0000000,
+                   1'b0, 1'b0, 1'b0, 1'b0, 1'b1, 1'b1, 4'b0010); // AUIPC
+
     // Unsupported instruction encodings use safe defaults.
     check_controls(7'b0110011, 3'b001, 7'b0100000,
                    1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 4'b1111);
