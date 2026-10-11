@@ -6,6 +6,7 @@ module ControlUnit_tb;
   reg [2:0] func3;
   reg [6:0] func7;
   wire branch;
+  wire jump;
   wire MemRead;
   wire MemtoReg;
   wire MemWrite;
@@ -18,6 +19,7 @@ module ControlUnit_tb;
     .func3(func3),
     .func7(func7),
     .branch(branch),
+    .jump(jump),
     .MemRead(MemRead),
     .MemtoReg(MemtoReg),
     .MemWrite(MemWrite),
@@ -164,12 +166,48 @@ module ControlUnit_tb;
     check_controls(7'b0010111, 3'b000, 7'b0000000,
                    1'b0, 1'b0, 1'b0, 1'b0, 1'b1, 1'b1, 4'b0010); // AUIPC
 
+    // Conditional branch instructions (B/SB format).
+    // Branch condition evaluation/PC redirection will be integrated in Top later.
+    check_controls(7'b1100011, 3'b000, 7'b0000000,
+                   1'b1, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 4'b0110); // BEQ
+
+    check_controls(7'b1100011, 3'b001, 7'b0000000,
+                   1'b1, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 4'b0110); // BNE
+
+    check_controls(7'b1100011, 3'b100, 7'b0000000,
+                   1'b1, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 4'b0100); // BLT
+
+    check_controls(7'b1100011, 3'b101, 7'b0000000,
+                   1'b1, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 4'b0100); // BGE
+
+    check_controls(7'b1100011, 3'b110, 7'b0000000,
+                   1'b1, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 4'b0101); // BLTU
+
+    check_controls(7'b1100011, 3'b111, 7'b0000000,
+                   1'b1, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 4'b0101); // BGEU
+
+    // Invalid branch funct3 retains safe defaults.
+    check_controls(7'b1100011, 3'b010, 7'b0000000,
+                   1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 4'b1111);
+
+    // UJ-format JAL: write a return address later in Top, and signal a jump.
+    check_controls(7'b1101111, 3'b000, 7'b0000000,
+                   1'b0, 1'b0, 1'b0, 1'b0, 1'b1, 1'b1, 4'b0010); // JAL
+    if (jump !== 1'b1) begin
+      $display("FAIL: JAL should assert jump");
+      $fatal;
+    end
+
     // Unsupported instruction encodings use safe defaults.
     check_controls(7'b0110011, 3'b001, 7'b0100000,
                    1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 4'b1111);
 
     check_controls(7'b0000011, 3'b011, 7'b0000000,
                    1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 4'b1111); // Invalid load funct3
+    if (jump !== 1'b0) begin
+      $display("FAIL: jump should be low for non-JAL instructions");
+      $fatal;
+    end
 
     $display("PASS: ControlUnit testbench completed successfully.");
     $finish;
