@@ -1,6 +1,7 @@
 module Top(
     input clk,
     input reset,
+    input [2:0] func3,
     output [31:0] PC_out,
     output [31:0] instruction,
     output [31:0] ALU_result,
@@ -60,10 +61,14 @@ module Top(
     );
 
     Data_Memory data_memory (
-        .clk(clk), .reset(reset),
-        .MemWrite(MemWrite), .MemRead(MemRead),
-        .address(ALU_result), .write_data(Read_data2),
-        .read_data(memory_read_data)
+    .clk(clk),
+    .reset(reset),
+    .MemWrite(MemWrite),
+    .MemRead(MemRead),
+    .func3(instruction[14:12]),
+    .address(ALU_result),
+    .write_data(Read_data2),
+    .read_data(memory_read_data)
     );
 
     assign write_back_data = MemtoReg ? memory_read_data : ALU_result;
