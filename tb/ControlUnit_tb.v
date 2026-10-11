@@ -73,7 +73,7 @@ module ControlUnit_tb;
 
     check_controls(7'b0110011, 3'b000, 7'b0100000,
                    1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 1'b1, 4'b0110); // SUB
-    
+
     check_controls(7'b0110011, 3'b001, 7'b0000000,
                    1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 1'b1, 4'b0011); // SLL
 
@@ -114,31 +114,27 @@ module ControlUnit_tb;
 
     check_controls(7'b0010011, 3'b011, 7'b0000000,
                     1'b0, 1'b0, 1'b0, 1'b0, 1'b1, 1'b1, 4'b0101); // SLTIU
-
     check_controls(7'b0010011, 3'b100, 7'b0000000,
                     1'b0, 1'b0, 1'b0, 1'b0, 1'b1, 1'b1, 4'b0111); // XORI
-
     check_controls(7'b0010011, 3'b101, 7'b0000000,
-                    1'b0, 1'b0, 1'b0, 1'b0, 1'b1, 1'b1, 4'b1000); // SRLI   
-
+                    1'b0, 1'b0, 1'b0, 1'b0, 1'b1, 1'b1, 4'b1000); // SRLI       
     check_controls(7'b0010011, 3'b101, 7'b0100000,
                     1'b0, 1'b0, 1'b0, 1'b0, 1'b1, 1'b1, 4'b1001); // SRAI
-
     check_controls(7'b0010011, 3'b110, 7'b0000000,
                     1'b0, 1'b0, 1'b0, 1'b0, 1'b1, 1'b1, 4'b0001); // ORI
-
     check_controls(7'b0010011, 3'b111, 7'b0000000,
                     1'b0, 1'b0, 1'b0, 1'b0, 1'b1, 1'b1, 4'b0000); // ANDI
-
     // Unsupported instruction encodings use safe defaults.
     check_controls(7'b0110011, 3'b001, 7'b0100000,
                    1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 4'b1111);
-    check_controls(7'b0000011, 3'b000, 7'b0000000,
-                   1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 4'b1111);
+
+    check_controls(7'b0000011, 3'b011, 7'b0000000,
+                   1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 4'b1111); // Invalid load funct3
 
     $display("PASS: ControlUnit testbench completed successfully.");
     $finish;
   end
+
   initial begin
     $monitor("Time=%0t | OPcode=%b | func3=%b | func7=%b | branch=%b | MemRead=%b | MemtoReg=%b | MemWrite=%b | ALUScr=%b | RegWrite=%b | ALUControlOut=%b",
              $time, OPcode, func3, func7, branch, MemRead, MemtoReg, MemWrite, ALUScr, RegWrite, ALUControlOut);

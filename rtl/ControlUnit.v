@@ -61,7 +61,7 @@ always @(*) begin
                         RegWrite = 1'b1;
                     end
                 end
-                
+
                 // SLT
                 3'b010: begin
                     if(func7 == 7'b0000000) begin
@@ -70,7 +70,7 @@ always @(*) begin
                     end
                 end
 
-                //SLTU
+                // SLTU
                 3'b011: begin
                     if(func7 == 7'b0000000) begin
                         ALUControlOut = 4'b0101;
@@ -78,7 +78,7 @@ always @(*) begin
                     end
                 end
 
-                //XOR
+                // XOR
                 3'b100: begin
                     if(func7 == 7'b0000000) begin
                         ALUControlOut = 4'b0111;
@@ -86,7 +86,7 @@ always @(*) begin
                     end
                 end
 
-                //SRL or SRA
+                // SRL or SRA
                 3'b101: begin
                     case (func7)
                         7'b0000000: begin
@@ -121,7 +121,7 @@ always @(*) begin
             endcase
         end
 
-        // I-type instructions
+        // I-type ALU instructions
         7'b0010011: begin
             ALUScr = 1'b1;
             case(func3)
@@ -154,8 +154,8 @@ always @(*) begin
                     ALUControlOut = 4'b0111; // XORI
                     RegWrite = 1'b1;
                 end
-                
-                // SRLI or SRAI 
+
+                // SRLI or SRAI
                 3'b101: begin
                     case (func7)
                         7'b0000000: begin
@@ -184,6 +184,29 @@ always @(*) begin
                 default: ALUControlOut = 4'b1111;
             endcase
         end
+
+        // Load instructions: LB, LH, LW, LBU and LHU.
+        7'b0000011: begin
+            case (func3)
+                3'b000, // LB
+                3'b001, // LH
+                3'b010, // LW
+                3'b100, // LBU
+                3'b101: begin // LHU
+                    ALUScr = 1'b1;          // Use the sign-extended I-type immediate.
+                    MemRead = 1'b1;         // Read from data memory.
+                    MemtoReg = 1'b1;        // Write memory data back to rd.
+                    MemWrite = 1'b0;        // A load does not write memory.
+                    RegWrite = 1'b1;        // Write the loaded value to rd.
+                    ALUControlOut = 4'b0010; // ADD: calculate base + offset.
+                end
+
+                default: begin
+                    // Invalid load funct3: keep safe defaults.
+                end
+            endcase
+        end
+
         default: begin
             // Unsupported opcode: retain safe defaults.
         end
