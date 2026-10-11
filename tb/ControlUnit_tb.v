@@ -70,21 +70,46 @@ module ControlUnit_tb;
     // R-type instructions: no memory or branch activity, register write enabled.
     check_controls(7'b0110011, 3'b000, 7'b0000000,
                    1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 1'b1, 4'b0010); // ADD
+
     check_controls(7'b0110011, 3'b000, 7'b0100000,
                    1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 1'b1, 4'b0110); // SUB
-    check_controls(7'b0110011, 3'b111, 7'b0000000,
-                   1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 1'b1, 4'b0000); // AND
+    
+    check_controls(7'b0110011, 3'b001, 7'b0000000,
+                   1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 1'b1, 4'b0011); // SLL
+
+    check_controls(7'b0110011, 3'b010, 7'b0000000,
+                   1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 1'b1, 4'b0100); // SLT
+
+    check_controls(7'b0110011, 3'b011, 7'b0000000,
+                   1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 1'b1, 4'b0101); // SLTU
+
+    check_controls(7'b0110011, 3'b100, 7'b0000000,
+                   1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 1'b1, 4'b0111); // XOR
+
+    check_controls(7'b0110011, 3'b101, 7'b0000000,
+                   1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 1'b1, 4'b1000); // SRL
+
+    check_controls(7'b0110011, 3'b101, 7'b0100000,
+                   1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 1'b1, 4'b1001); // SRA
+
     check_controls(7'b0110011, 3'b110, 7'b0000000,
                    1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 1'b1, 4'b0001); // OR
 
+    check_controls(7'b0110011, 3'b111, 7'b0000000,
+                   1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 1'b1, 4'b0000); // AND
+
     // Unsupported instruction encodings use safe defaults.
-    check_controls(7'b0110011, 3'b001, 7'b0000000,
+    check_controls(7'b0110011, 3'b001, 7'b0100000,
                    1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 4'b1111);
     check_controls(7'b0000011, 3'b000, 7'b0000000,
                    1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 4'b1111);
 
     $display("PASS: ControlUnit testbench completed successfully.");
     $finish;
+  end
+  initial begin
+    $monitor("Time=%0t | OPcode=%b | func3=%b | func7=%b | branch=%b | MemRead=%b | MemtoReg=%b | MemWrite=%b | ALUScr=%b | RegWrite=%b | ALUControlOut=%b",
+             $time, OPcode, func3, func7, branch, MemRead, MemtoReg, MemWrite, ALUScr, RegWrite, ALUControlOut);
   end
 
 endmodule
