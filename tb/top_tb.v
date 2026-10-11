@@ -64,6 +64,8 @@ module Top_tb;
         dut.register_file.registers[15] = 32'd1;
         dut.register_file.registers[16] = 32'h00000080;
         dut.register_file.registers[17] = 32'hFFFF80FF;
+        // JALR uses this odd address to verify that target bit 0 is cleared.
+        dut.register_file.registers[21] = 32'd1;
 
         // Execute all 36 instruction slots in programs/instructions.mem.
         for (i = 0; i < 36; i = i + 1) begin

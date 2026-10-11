@@ -4,6 +4,7 @@ module ControlUnit(
     func7,
     branch,
     jump,
+    jalr,
     MemRead,
     MemtoReg,
     MemWrite,
@@ -18,6 +19,7 @@ input [6:0] func7;
 
 output reg branch;
 output reg jump;
+output reg jalr;
 output reg MemRead;
 output reg MemtoReg;
 output reg MemWrite;
@@ -29,6 +31,7 @@ always @(*) begin
     // Safe defaults for unsupported instructions.
     branch = 1'b0;
     jump = 1'b0;
+    jalr = 1'b0;
     MemRead = 1'b0;
     MemtoReg = 1'b0;
     MemWrite = 1'b0;
@@ -185,6 +188,22 @@ always @(*) begin
                     RegWrite = 1'b1;
                 end
                 default: ALUControlOut = 4'b1111;
+            endcase
+        end
+
+        // I-type JALR: jump to (rs1 + immediate) with bit 0 cleared.
+        7'b1100111: begin
+            case (func3)
+                3'b000: begin
+                    jalr = 1'b1;
+                    ALUScr = 1'b1;            // Select the sign-extended immediate.
+                    RegWrite = 1'b1;          // Save PC + 4 in rd.
+                    ALUControlOut = 4'b0010;  // ADD computes rs1 + immediate.
+                end
+
+                default: begin
+                    // Invalid JALR funct3: keep safe defaults.
+                end
             endcase
         end
 

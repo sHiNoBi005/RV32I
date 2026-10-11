@@ -9,7 +9,7 @@ module Top(
     wire [31:0] PC_next;
     wire [31:0] Read_data1, Read_data2, ALU_B;
     wire [31:0] memory_read_data, write_back_data;
-    wire branch, jump;
+    wire branch, jump, jalr;
     wire MemRead, MemtoReg, MemWrite, ALUScr, RegWrite;
 
     wire br_taken;
@@ -24,9 +24,15 @@ module Top(
     assign branch_taken = branch && br_taken;
 
     // Select the next PC.
-    assign PC_next = branch_taken
-                ? (PC_out + immediate)
-                : (PC_out + 32'd4);
+    assign PC_plus4 = PC_out + 32'd4;
+
+    // JALR target is rs1 + immediate, with bit 0 cleared.
+    // Otherwise, retain the existing branch/sequential PC selection.
+    assign PC_next = jalr
+                ? {ALU_result[31:1], 1'b0}
+                : branch_taken
+                    ? (PC_out + immediate)
+                    : PC_plus4;
 
 
     ProgramCounter pc (
@@ -43,6 +49,7 @@ module Top(
         .func7(instruction[31:25]),
         .branch(branch),
         .jump(jump),
+        .jalr(jalr),
         .MemRead(MemRead),
         .MemtoReg(MemtoReg),
         .MemWrite(MemWrite),
@@ -97,5 +104,8 @@ module Top(
     .read_data(memory_read_data)
     );
 
-    assign write_back_data = MemtoReg ? memory_read_data : ALU_result;
+    // JALR writes the address of the following instruction to rd.
+    assign write_back_data = jalr
+                           ? PC_plus4
+                           : (MemtoReg ? memory_read_data : ALU_result);
 endmodule

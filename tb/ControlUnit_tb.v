@@ -7,6 +7,7 @@ module ControlUnit_tb;
   reg [6:0] func7;
   wire branch;
   wire jump;
+  wire jalr;
   wire MemRead;
   wire MemtoReg;
   wire MemWrite;
@@ -20,6 +21,7 @@ module ControlUnit_tb;
     .func7(func7),
     .branch(branch),
     .jump(jump),
+    .jalr(jalr),
     .MemRead(MemRead),
     .MemtoReg(MemtoReg),
     .MemWrite(MemWrite),
@@ -195,6 +197,26 @@ module ControlUnit_tb;
                    1'b0, 1'b0, 1'b0, 1'b0, 1'b1, 1'b1, 4'b0010); // JAL
     if (jump !== 1'b1) begin
       $display("FAIL: JAL should assert jump");
+      $fatal;
+    end
+
+    // I-type JALR: valid funct3, use immediate and write link value.
+    check_controls(7'b1100111, 3'b000, 7'b0000000,
+                   1'b0, 1'b0, 1'b0, 1'b0, 1'b1, 1'b1, 4'b0010); // JALR
+    if (jalr !== 1'b1) begin
+      $display("FAIL: JALR should assert jalr");
+      $fatal;
+    end
+    if (jump !== 1'b0) begin
+      $display("FAIL: JALR should not assert JAL jump signal");
+      $fatal;
+    end
+
+    // Invalid JALR funct3 retains safe defaults.
+    check_controls(7'b1100111, 3'b001, 7'b0000000,
+                   1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 4'b1111);
+    if (jalr !== 1'b0) begin
+      $display("FAIL: invalid JALR encoding should not assert jalr");
       $fatal;
     end
 
