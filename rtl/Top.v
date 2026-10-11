@@ -1,7 +1,6 @@
 module Top(
     input clk,
     input reset,
-    input [2:0] func3,
     output [31:0] PC_out,
     output [31:0] instruction,
     output [31:0] ALU_result,

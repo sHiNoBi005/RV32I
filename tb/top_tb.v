@@ -75,13 +75,18 @@ module Top_tb;
                 9: if (dut.register_file.registers[12] !== 32'd0)
                        $fatal(1, "AND failed");
                  
-                10: if (dut.data_memory.memory[5] !== 32'd3)
-                       $fatal(1, "SW integration test failed");
-                     $display("SW integration test passed");
+                10: begin
+                    if (dut.data_memory.memory[5] !== 32'd3)
+                        $fatal(1, "SW integration test failed");
+                    $display("SW integration test passed");
+                end
 
-                11: if (dut.register_file.registers[13] !== 32'd3)
-                       $fatal(1, "LW integration test failed: x13 = %h",dut.register_file.registers[13]);
-                     $display("LW integration test passed");
+                11: begin
+                    if (dut.register_file.registers[13] !== 32'd3)
+                        $fatal(1, "LW integration test failed: x13 = %h",
+                               dut.register_file.registers[13]);
+                    $display("LW integration test passed");
+                end
 
             endcase
 
@@ -89,7 +94,7 @@ module Top_tb;
                      i, PC_out, instruction);
         end
 
-        $display("PASS: All eleven R-type integration tests passed.");
+        $display("PASS: All twelve integration tests passed.");
         $finish;
     end
 
