@@ -227,6 +227,15 @@ always @(*) begin
             endcase
         end
 
+        // U-type instructions: LUI and AUIPC.
+        // Their instruction class is identified by opcode alone.
+        7'b0110111, // LUI
+        7'b0010111: begin // AUIPC
+            ALUScr = 1'b1;           // Select the U-type immediate for operand B.
+            RegWrite = 1'b1;         // Write the result to rd.
+            ALUControlOut = 4'b0010; // ADD operation.
+        end
+
         default: begin
             // Unsupported opcode: retain safe defaults.
         end
