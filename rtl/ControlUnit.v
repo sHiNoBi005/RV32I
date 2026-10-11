@@ -239,33 +239,19 @@ always @(*) begin
             ALUControlOut = 4'b0010; // ADD operation.
         end
 
-        // Conditional branch instructions (B/SB format).
+        // Conditional branch instructions: identify valid branch types.
+        // BranchComp performs the actual register comparison.
         7'b1100011: begin
             case (func3)
-                3'b000: begin // BEQ: compare equal using SUB/zero flag.
+                3'b000, // BEQ
+                3'b001, // BNE
+                3'b100, // BLT
+                3'b101, // BGE
+                3'b110, // BLTU
+                3'b111: begin // BGEU
                     branch = 1'b1;
-                    ALUControlOut = 4'b0110;
                 end
-                3'b001: begin // BNE: compare not equal using SUB/zero flag.
-                    branch = 1'b1;
-                    ALUControlOut = 4'b0110;
-                end
-                3'b100: begin // BLT: signed less-than comparison.
-                    branch = 1'b1;
-                    ALUControlOut = 4'b0100;
-                end
-                3'b101: begin // BGE: signed greater/equal; invert SLT result in branch logic.
-                    branch = 1'b1;
-                    ALUControlOut = 4'b0100;
-                end
-                3'b110: begin // BLTU: unsigned less-than comparison.
-                    branch = 1'b1;
-                    ALUControlOut = 4'b0101;
-                end
-                3'b111: begin // BGEU: unsigned greater/equal; invert SLTU result in branch logic.
-                    branch = 1'b1;
-                    ALUControlOut = 4'b0101;
-                end
+
                 default: begin
                     // Invalid branch funct3: keep safe defaults.
                 end
