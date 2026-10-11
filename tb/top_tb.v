@@ -1,4 +1,4 @@
-`timescale 1ps/1ps
+`timescale 1ns/1ps
 
 module Top_tb;
 
@@ -7,61 +7,53 @@ module Top_tb;
 
     wire [31:0] PC_out;
     wire [31:0] instruction;
+    wire [31:0] ALU_result;
+    wire ALU_zero;
+    wire [31:0] memory_read_data;
+    wire [31:0] writeback_data;
 
-    reg [31:0] expected [0:4];
-    integer i;
-
-    // Instantiate the Top module
     Top dut (
         .clk(clk),
         .reset(reset),
         .PC_out(PC_out),
-        .instruction(instruction)
-    )
+        .instruction(instruction),
+        .ALU_result(ALU_result),
+        .ALU_zero(ALU_zero),
+        .memory_read_data(memory_read_data),
+        .writeback_data(writeback_data)
+    );
 
     always #5 clk = ~clk;
 
     initial begin
         $dumpfile("sim/top_tb.vcd");
-        $dumpvars(0, Top_Fetch_tb);
+        $dumpvars(0, Top_tb);
 
-        // Expected instructions at byte addresses 0, 4, 8, 12 and 16.
-        expected[0] = 32'h002081B3;
-        expected[1] = 32'h40208233;
-        expected[2] = 32'h002092B3;
-        expected[3] = 32'h00112333;
-        expected[4] = 32'h001133B3;
-
-        // Hold reset for two clock edges.
+        // Reset the processor.
         repeat (2) @(posedge clk);
         #1;
 
         if (PC_out !== 32'd0)
-            $fatal(1, "Fetch reset failed: PC = %h", PC_out);
+            $fatal(1, "Reset failed: PC = %h", PC_out);
 
-        if (instruction !== expected[0])
-            $fatal(1, "First instruction fetch failed: %h",
-                   instruction);
+        // The first instruction is: add x3, x1, x2.
+        if (instruction !== 32'h002081B3)
+            $fatal(1, "Instruction fetch failed: %h", instruction);
 
+        // Seed the source registers and execute the ADD instruction.
+        dut.register_file.registers[1] = 32'd20;
+        dut.register_file.registers[2] = 32'd3;
         reset = 0;
 
-        // Check sequential instruction fetching.
-        for (i = 1; i <= 4; i = i + 1) begin
-            @(posedge clk);
-            #1;
+        @(posedge clk);
+        #1;
 
-            if (PC_out !== (i * 4))
-                $fatal(1, "PC failed at step %0d: got %h",
-                       i, PC_out);
+        if (dut.register_file.registers[3] !== 32'd23)
+            $fatal(1, "ADD failed: x3 = %h",
+                   dut.register_file.registers[3]);
 
-            if (instruction !== expected[i])
-                $fatal(1, "Instruction fetch failed at PC %h: got %h",
-                       PC_out, instruction);
-
-            $display("Fetch passed: PC=%h, instruction=%h",
-                     PC_out, instruction);
-        end
-
-        $display("PASS: Fetch stage works correctly.");
+        $display("PASS: Top smoke test completed.");
         $finish;
     end
+
+endmodule

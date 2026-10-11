@@ -1,4 +1,4 @@
-module Top_Rebuild(
+module Top(
     input wire clk,
     input wire reset,
 
