@@ -37,6 +37,7 @@ module DataMemory_tb;
 
     address = 32'd4;
     write_data = 32'h80FF7F01;
+    func3 = 3'b010;
     MemWrite = 1;
     @(posedge clk);
     #1 MemWrite = 0;
@@ -63,6 +64,67 @@ module DataMemory_tb;
     MemRead = 0;
     #1 if (read_data !== 0) $fatal(1, "disabled read failed");
 
+    
+    // SB: replace byte at address 5 with 0xAA.
+    // Initial word: 0x80FF7F01
+    MemRead = 0;
+    address = 32'd5;
+    write_data = 32'h000000AA;
+    func3 = 3'b000; // SB
+    MemWrite = 1;
+    @(posedge clk);
+    #1;
+    MemWrite = 0;
+
+    // Read the full word to check untouched bytes.
+    MemRead = 1;
+    address = 32'd4;
+    func3 = 3'b010; // LW
+    #1;
+    if (read_data !== 32'h80FFAA01)
+        $fatal(1, "SB failed: got %h", read_data);
+
+    // SH: replace upper halfword with 0x1234.
+    MemRead = 0;
+    address = 32'd6;
+    write_data = 32'h00001234;
+    func3 = 3'b001; // SH
+    MemWrite = 1;
+    @(posedge clk);
+    #1;
+    MemWrite = 0;
+
+    // Verify the lower halfword is still unchanged.
+    MemRead = 1;
+    address = 32'd4;
+    func3 = 3'b010; // LW
+    #1;
+    if (read_data !== 32'h1234AA01)
+        $fatal(1, "SH failed: got %h", read_data);
+
+    // SW: overwrite an entire word at address 8.
+    MemRead = 0;
+    address = 32'd8;
+    write_data = 32'h11223344;
+    func3 = 3'b010; // SW
+    MemWrite = 1;
+    @(posedge clk);
+    #1;
+    MemWrite = 0;
+
+    MemRead = 1;
+    address = 32'd8;
+    func3 = 3'b010; // LW
+    #1;
+    if (read_data !== 32'h11223344)
+        $fatal(1, "SW failed: got %h", read_data);
+
+    MemRead = 0;
+    #1;
+    if (read_data !== 32'b0)
+        $fatal(1, "Disabled read failed");
+
+    $display("PASS: Load and store size tests completed.");
     $display("PASS: Data_Memory testbench completed successfully.");
     $finish;
   end

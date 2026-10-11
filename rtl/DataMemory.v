@@ -86,8 +86,30 @@ always @(posedge clk) begin
         for (i = 0; i < 256; i = i + 1)
             memory[i] <= 32'b0;
     end
-    else if (MemWrite) begin
-        memory[address[9:2]] <= write_data;
+    else if(MemWrite) begin
+        case(func3)
+          // SB: store byte
+          3'b000: begin
+            case (address[1:0])
+                2'b00: memory[address[9:2]][7:0] <= write_data[7:0];
+                2'b01: memory[address[9:2]][15:8] <= write_data[7:0];
+                2'b10: memory[address[9:2]][23:16] <= write_data[7:0];
+                2'b11: memory[address[9:2]][31:24] <= write_data[7:0];
+            endcase
+          end
+
+          // SH: store halfword
+          3'b001: begin
+            if (address[1] == 1'b0)
+                memory[address[9:2]][15:0] <= write_data[15:0];
+            else
+                memory[address[9:2]][31:16] <= write_data[15:0];
+          end
+
+          // SW: store word
+          3'b010: memory[address[9:2]] <= write_data;
+
+        endcase
     end
 end
 
