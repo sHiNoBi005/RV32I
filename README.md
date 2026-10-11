@@ -223,7 +223,7 @@ The testbenches are currently run individually; there is not yet a single comman
 ## Current scope and limitations
 
 - The processor implements a subset of RV32I. Unsupported encodings do not have a complete architectural exception-handling path.
-- JALR clears bit 0 of the calculated target, as the instruction requires. The project does not yet implement instruction-address-misaligned exceptions; example jump targets should be valid and aligned.
+- JALR clears bit 0 of the calculated target, as the instruction requires. The project does not yet implement instruction-address-misaligned exceptions. The current sample ends with `JALR x20, 0(x21)`; the preceding program sets `x21 = 7`, producing target address 6 after bit 0 is cleared. Address 6 is not 4-byte aligned, so that sample is not yet a valid end-to-end JALR demonstration. A dedicated test should use an aligned target.
 - The current top-level testbench does not yet run the complete program or verify JAL/JALR execution end to end.
 - Simulation results should not be treated as passing until the relevant testbenches have been run with a Verilog simulator.
 
