@@ -7,7 +7,7 @@ module InstructionMemory(
 
     // Load the program at simulation startup
     initial begin
-        $readmemh("sim/instructions.mem", memory);
+        $readmemh("programs/instructions.mem", memory);
     end
 
     // Fetch the instruction at the given byte address
