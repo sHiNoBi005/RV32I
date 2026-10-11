@@ -62,3 +62,4 @@
 00F77463  // BGEU x14, x15, +8  ; taken: unsigned comparison
 06300D93  // ADDI x27, x0, 99   ; must be skipped
 00F00E13  // ADDI x28, x0, 15   ; branch target
+000A8A67  // JALR x20, 0(x21)
