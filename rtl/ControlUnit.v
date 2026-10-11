@@ -3,6 +3,7 @@ module ControlUnit(
     func3,
     func7,
     branch,
+    jump,
     MemRead,
     MemtoReg,
     MemWrite,
@@ -16,6 +17,7 @@ input [2:0] func3;
 input [6:0] func7;
 
 output reg branch;
+output reg jump;
 output reg MemRead;
 output reg MemtoReg;
 output reg MemWrite;
@@ -26,6 +28,7 @@ output reg [3:0] ALUControlOut;
 always @(*) begin
     // Safe defaults for unsupported instructions.
     branch = 1'b0;
+    jump = 1'b0;
     MemRead = 1'b0;
     MemtoReg = 1'b0;
     MemWrite = 1'b0;
@@ -234,6 +237,47 @@ always @(*) begin
             ALUScr = 1'b1;           // Select the U-type immediate for operand B.
             RegWrite = 1'b1;         // Write the result to rd.
             ALUControlOut = 4'b0010; // ADD operation.
+        end
+
+        // Conditional branch instructions (B/SB format).
+        7'b1100011: begin
+            case (func3)
+                3'b000: begin // BEQ: compare equal using SUB/zero flag.
+                    branch = 1'b1;
+                    ALUControlOut = 4'b0110;
+                end
+                3'b001: begin // BNE: compare not equal using SUB/zero flag.
+                    branch = 1'b1;
+                    ALUControlOut = 4'b0110;
+                end
+                3'b100: begin // BLT: signed less-than comparison.
+                    branch = 1'b1;
+                    ALUControlOut = 4'b0100;
+                end
+                3'b101: begin // BGE: signed greater/equal; invert SLT result in branch logic.
+                    branch = 1'b1;
+                    ALUControlOut = 4'b0100;
+                end
+                3'b110: begin // BLTU: unsigned less-than comparison.
+                    branch = 1'b1;
+                    ALUControlOut = 4'b0101;
+                end
+                3'b111: begin // BGEU: unsigned greater/equal; invert SLTU result in branch logic.
+                    branch = 1'b1;
+                    ALUControlOut = 4'b0101;
+                end
+                default: begin
+                    // Invalid branch funct3: keep safe defaults.
+                end
+            endcase
+        end
+
+        // UJ-format JAL. PC redirection and PC+4 write-back are integrated in Top later.
+        7'b1101111: begin
+            jump = 1'b1;
+            ALUScr = 1'b1;
+            RegWrite = 1'b1;
+            ALUControlOut = 4'b0010;
         end
 
         default: begin
