@@ -127,42 +127,32 @@ always @(*) begin
             case(func3)
                 // ADDI
                 3'b000: begin
-                    if(func7 == 7'b0000000) begin
-                        ALUControlOut = 4'b0010; // ADDI
-                        RegWrite = 1'b1;
-                    end 
+                    ALUControlOut = 4'b0010; // ADDI
+                    RegWrite = 1'b1;
                 end
 
                 // SLLI
                 3'b001: begin
-                    if(func7 == 7'b0000000) begin
-                        ALUControlOut = 4'b0011; // SLLI
-                        RegWrite = 1'b1;
-                    end
+                    ALUControlOut = 4'b0011; // SLLI
+                    RegWrite = 1'b1;
                 end
 
                 // SLTI
                 3'b010: begin
-                    if(func7 == 7'b0000000) begin
-                        ALUControlOut = 4'b0100; // SLTI
-                        RegWrite = 1'b1;
-                    end
+                    ALUControlOut = 4'b0100; // SLTI
+                    RegWrite = 1'b1;
                 end
 
                 // SLTIU
                 3'b011: begin
-                    if(func7 == 7'b0000000) begin
-                        ALUControlOut = 4'b0101; // SLTIU
-                        RegWrite = 1'b1;
-                    end
+                    ALUControlOut = 4'b0101; // SLTIU
+                    RegWrite = 1'b1;
                 end
 
                 // XORI
                 3'b100: begin
-                    if(func7 == 7'b0000000) begin
-                        ALUControlOut = 4'b0111; // XORI
-                        RegWrite = 1'b1;
-                    end
+                    ALUControlOut = 4'b0111; // XORI
+                    RegWrite = 1'b1;
                 end
                 
                 // SRLI or SRAI 
@@ -182,18 +172,14 @@ always @(*) begin
 
                 // ORI
                 3'b110: begin
-                    if (func7 == 7'b0000000) begin
-                        ALUControlOut = 4'b0001; // ORI
-                        RegWrite = 1'b1;
-                    end
+                    ALUControlOut = 4'b0001; // ORI
+                    RegWrite = 1'b1;
                 end
 
                 // ANDI
                 3'b111: begin
-                    if (func7 == 7'b0000000) begin
-                        ALUControlOut = 4'b0000; // ANDI
-                        RegWrite = 1'b1;
-                    end
+                    ALUControlOut = 4'b0000; // ANDI
+                    RegWrite = 1'b1;
                 end
                 default: ALUControlOut = 4'b1111;
             endcase
