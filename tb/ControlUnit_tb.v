@@ -167,24 +167,24 @@ module ControlUnit_tb;
                    1'b0, 1'b0, 1'b0, 1'b0, 1'b1, 1'b1, 4'b0010); // AUIPC
 
     // Conditional branch instructions (B/SB format).
-    // Branch condition evaluation/PC redirection will be integrated in Top later.
+    // BranchComp performs comparisons; PC redirection will be integrated in Top later.
     check_controls(7'b1100011, 3'b000, 7'b0000000,
-                   1'b1, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 4'b0110); // BEQ
+                   1'b1, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 4'b1111); // BEQ
 
     check_controls(7'b1100011, 3'b001, 7'b0000000,
-                   1'b1, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 4'b0110); // BNE
+                   1'b1, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 4'b1111); // BNE
 
     check_controls(7'b1100011, 3'b100, 7'b0000000,
-                   1'b1, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 4'b0100); // BLT
+                   1'b1, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 4'b1111); // BLT
 
     check_controls(7'b1100011, 3'b101, 7'b0000000,
-                   1'b1, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 4'b0100); // BGE
+                   1'b1, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 4'b1111); // BGE
 
     check_controls(7'b1100011, 3'b110, 7'b0000000,
-                   1'b1, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 4'b0101); // BLTU
+                   1'b1, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 4'b1111); // BLTU
 
     check_controls(7'b1100011, 3'b111, 7'b0000000,
-                   1'b1, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 4'b0101); // BGEU
+                   1'b1, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 4'b1111); // BGEU
 
     // Invalid branch funct3 retains safe defaults.
     check_controls(7'b1100011, 3'b010, 7'b0000000,
