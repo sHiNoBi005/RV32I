@@ -40,7 +40,7 @@ module Top_tb;
         dut.register_file.registers[15] = 32'd1;
 
         // Allow each instruction to execute and write back.
-        for (i = 0; i < 10; i = i + 1) begin
+        for (i = 0; i < 12; i = i + 1) begin
             @(posedge clk);
             #1;
 
@@ -74,13 +74,22 @@ module Top_tb;
 
                 9: if (dut.register_file.registers[12] !== 32'd0)
                        $fatal(1, "AND failed");
+                 
+                10: if (dut.data_memory.memory[5] !== 32'd3)
+                       $fatal(1, "SW integration test failed");
+                     $display("SW integration test passed");
+
+                11: if (dut.register_file.registers[13] !== 32'd3)
+                       $fatal(1, "LW integration test failed: x13 = %h",dut.register_file.registers[13]);
+                     $display("LW integration test passed");
+
             endcase
 
             $display("Instruction %0d passed: PC=%h, instruction=%h",
                      i, PC_out, instruction);
         end
 
-        $display("PASS: All ten R-type integration tests passed.");
+        $display("PASS: All eleven R-type integration tests passed.");
         $finish;
     end
 
