@@ -17,8 +17,8 @@ module Top(
 
     wire [3:0] ALUControlOut;
     wire [31:0] immediate;
+    wire [31:0] ALU_A;
 
-    
     // Take the branch only when the instruction is a valid
     // branch and the comparison condition is true.
     assign branch_taken = branch && br_taken;
@@ -73,10 +73,15 @@ module Top(
     .immediate(immediate)
     );
 
+    assign ALU_A = (instruction[6:0] == 7'b0010111)
+                 ? PC_out
+                 : (instruction[6:0] == 7'b0110111)
+                 ? 32'b0
+                 : Read_data1;
     assign ALU_B = ALUScr ? immediate : Read_data2;
 
     ALU alu (
-        .A(Read_data1), .B(ALU_B),
+        .A(ALU_A), .B(ALU_B),
         .ALUControl_in(ALUControlOut),
         .ALU_result(ALU_result), .zero(zero)
     );

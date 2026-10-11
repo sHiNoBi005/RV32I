@@ -40,3 +40,25 @@
 12345937  // LUI x18 0x12345 , x18 = 0x12345000
 
 00002997  // AUIPC x19 0x00002 x19 = 0x00002050
+
+
+00108463  // BEQ  x1, x1, +8    ; taken: skip next instruction
+06300A13  // ADDI x20, x0, 99   ; must be skipped
+00700A93  // ADDI x21, x0, 7    ; branch target
+
+00109463  // BNE  x1, x1, +8    ; not taken
+00900B13  // ADDI x22, x0, 9    ; must execute
+
+00F74463  // BLT  x14, x15, +8  ; taken: -2147483648 < 1
+06300B93  // ADDI x23, x0, 99   ; must be skipped
+00B00C13  // ADDI x24, x0, 11   ; branch target
+
+00F75463  // BGE  x14, x15, +8  ; not taken
+00C00C93  // ADDI x25, x0, 12   ; must execute
+
+00F76463  // BLTU x14, x15, +8  ; not taken: unsigned comparison
+00D00D13  // ADDI x26, x0, 13   ; must execute
+
+00F77463  // BGEU x14, x15, +8  ; taken: unsigned comparison
+06300D93  // ADDI x27, x0, 99   ; must be skipped
+00F00E13  // ADDI x28, x0, 15   ; branch target
