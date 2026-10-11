@@ -11,6 +11,7 @@ module Top(
     wire [31:0] memory_read_data, write_back_data;
     wire branch, MemRead, MemtoReg, MemWrite, ALUScr, RegWrite;
     wire [3:0] ALUControlOut;
+    wire [31:0] immediate;
 
     assign PC_next = PC_out + 32'd4;
 
@@ -45,9 +46,12 @@ module Top(
         .Read_data1(Read_data1),
         .Read_data2(Read_data2)
     );
+    ImmediateGenerator imm_gen (
+    .instruction(instruction),
+    .immediate(immediate)
+    );
 
-    assign ALU_B = ALUScr ? {{20{instruction[31]}}, instruction[31:20]}
-                         : Read_data2;
+    assign ALU_B = ALUScr ? immediate : Read_data2;
 
     ALU alu (
         .A(Read_data1), .B(ALU_B),
