@@ -80,6 +80,14 @@ flowchart TD
     PCUpdate --> PC
 ```
 
+### Processor datapath diagram
+
+![Processor datapath diagram](docs/images/processor-datapath.png)
+
+*Figure: a high-level view of the processor's data paths and control signals.*
+
+> **Reading this diagram:** The drawing is an architectural reference, so some labels such as `PCSrc`, `ResultSrc`, and `ImmSrc` are conceptual and do not exactly match the names or widths used in the current RTL. In the current implementation, the separate `BranchComp` module outputs `br_taken`, connected as `branch_taken` in `rtl/Top.v`. That result is combined with the Control Unit's `branch` signal in next-PC selection.
+
 ### The main parts in plain language
 
 | Part | Its job |
@@ -169,6 +177,9 @@ This is a **subset of RV32I**, not a claim that every part of the RISC-V specifi
 │   ├── RegisterFile.v        # General-purpose registers
 │   └── Top.v                 # Connects the processor modules
 ├── tb/                       # Testbenches for individual modules and Top
+├── docs/
+│   └── images/
+│       └── processor-datapath.png # Processor datapath reference
 ├── README.md                 # Project overview and processor walkthrough
 └── VERILOG_GUIDE.md          # Plain-language guide to Verilog syntax
 ```
