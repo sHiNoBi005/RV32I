@@ -207,6 +207,26 @@ always @(*) begin
             endcase
         end
 
+        // Store instructions: SB, SH and SW.
+        7'b0100011: begin
+            case (func3)
+                3'b000, // SB: store byte
+                3'b001, // SH: store halfword
+                3'b010: begin // SW: store word
+                    ALUScr = 1'b1;           // Use the S-type immediate.
+                    MemRead = 1'b0;          // A store does not read memory.
+                    MemtoReg = 1'b0;         // A store does not write a register.
+                    MemWrite = 1'b1;         // Enable data-memory write.
+                    RegWrite = 1'b0;         // No destination register write.
+                    ALUControlOut = 4'b0010; // ADD: calculate base + offset.
+                end
+
+                default: begin
+                    // Invalid store funct3: keep safe defaults.
+                end
+            endcase
+        end
+
         default: begin
             // Unsupported opcode: retain safe defaults.
         end
