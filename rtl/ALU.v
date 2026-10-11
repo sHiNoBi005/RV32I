@@ -9,11 +9,25 @@ module ALU(
 
 always @(*) begin
     case (ALUControl_in)
-
-        4'b0000: ALU_result = A & B; // AND
-        4'b0001: ALU_result = A | B; // OR
         4'b0010: ALU_result = A + B; // ADD
+
         4'b0110: ALU_result = A - B; // SUB
+
+        4'b0011: ALU_result = A << B[4:0]; // SLL
+
+        4'b0100: ALU_result = ($signed(A) < $signed(B)) ? 32'b1 : 32'b0; // SLT
+
+        4'b0101: ALU_result = A < B ? 32'b1 : 32'b0; // SLTU
+
+        4'b0111: ALU_result = A ^ B; // XOR
+
+        4'b1000: ALU_result = A >> B[4:0]; // SRL
+
+        4'b1001: ALU_result = $signed(A) >>> B[4:0]; // SRA
+
+        4'b0001: ALU_result = A | B; // OR
+        
+        4'b0000: ALU_result = A & B; // AND
 
         default: ALU_result = 32'b0;
 

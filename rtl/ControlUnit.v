@@ -54,6 +54,53 @@ always @(*) begin
                     endcase
                 end
 
+                // SLL
+                3'b001: begin
+                    if(func7 == 7'b0000000) begin
+                        ALUControlOut = 4'b0011;
+                        RegWrite = 1'b1;
+                    end
+                end
+                
+                // SLT
+                3'b010: begin
+                    if(func7 == 7'b0000000) begin
+                        ALUControlOut = 4'b0100;
+                        RegWrite = 1'b1;
+                    end
+                end
+
+                //SLTU
+                3'b011: begin
+                    if(func7 == 7'b0000000) begin
+                        ALUControlOut = 4'b0101;
+                        RegWrite = 1'b1;
+                    end
+                end
+
+                //XOR
+                3'b100: begin
+                    if(func7 == 7'b0000000) begin
+                        ALUControlOut = 4'b0111;
+                        RegWrite = 1'b1;
+                    end
+                end
+
+                //SRL or SRA
+                3'b101: begin
+                    case (func7)
+                        7'b0000000: begin
+                            ALUControlOut = 4'b1000; // SRL
+                            RegWrite = 1'b1;
+                        end
+                        7'b0100000: begin
+                            ALUControlOut = 4'b1001; // SRA
+                            RegWrite = 1'b1;
+                        end
+                        default:    ALUControlOut = 4'b1111;
+                    endcase
+                end
+
                 // OR
                 3'b110: begin
                     if (func7 == 7'b0000000) begin
@@ -69,7 +116,6 @@ always @(*) begin
                         RegWrite = 1'b1;
                     end
                 end
-
                 default: ALUControlOut = 4'b1111;
 
             endcase
