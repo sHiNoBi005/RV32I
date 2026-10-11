@@ -124,6 +124,23 @@ module ControlUnit_tb;
                     1'b0, 1'b0, 1'b0, 1'b0, 1'b1, 1'b1, 4'b0001); // ORI
     check_controls(7'b0010011, 3'b111, 7'b0000000,
                     1'b0, 1'b0, 1'b0, 1'b0, 1'b1, 1'b1, 4'b0000); // ANDI
+    // Load instructions: read memory, select memory data, and write rd.
+    // The ALU adds the base register and sign-extended immediate.
+    check_controls(7'b0000011, 3'b000, 7'b0000000,
+                   1'b0, 1'b1, 1'b1, 1'b0, 1'b1, 1'b1, 4'b0010); // LB
+
+    check_controls(7'b0000011, 3'b001, 7'b0000000,
+                   1'b0, 1'b1, 1'b1, 1'b0, 1'b1, 1'b1, 4'b0010); // LH
+
+    check_controls(7'b0000011, 3'b010, 7'b0000000,
+                   1'b0, 1'b1, 1'b1, 1'b0, 1'b1, 1'b1, 4'b0010); // LW
+
+    check_controls(7'b0000011, 3'b100, 7'b0000000,
+                   1'b0, 1'b1, 1'b1, 1'b0, 1'b1, 1'b1, 4'b0010); // LBU
+
+    check_controls(7'b0000011, 3'b101, 7'b0000000,
+                   1'b0, 1'b1, 1'b1, 1'b0, 1'b1, 1'b1, 4'b0010); // LHU
+
     // Unsupported instruction encodings use safe defaults.
     check_controls(7'b0110011, 3'b001, 7'b0100000,
                    1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 1'b0, 4'b1111);
