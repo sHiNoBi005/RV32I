@@ -32,6 +32,16 @@ module Top_tb;
 
     always #5 clk = ~clk;
 
+    // Continuously display key datapath signals while the test runs.
+    initial begin
+        $monitor(
+            "time=%0t | PC=%h | instr=%h | rs1_data=%0d | rs2_data=%0d | ALU=%0d | reg_write=%b",
+            $time, PC_out, instruction,
+            dut.Read_data1, dut.Read_data2,
+            ALU_result, dut.RegWrite
+        );
+    end
+
     task check_register;
         input integer register_number;
         input [31:0] expected_value;
