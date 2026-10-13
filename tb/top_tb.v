@@ -17,8 +17,8 @@ module Top_tb;
         reset = 1;
 
         $monitor(
-            "time = %0t | pc = %h | instr = %h | rs1_data = %0d | rs2_data = %0d | alu_out = %0d | reg_write = %b",
-            $time, uut.PC_out, uut.instruction,
+            "pc = %h | instr = %h | rs1_data = %d | rs2_data = %d | alu_out = %d | reg_write = %b",
+            uut.PC_out, uut.instruction,
             uut.Read_data1, uut.Read_data2,
             uut.ALU_result, uut.RegWrite
         );
