@@ -21,6 +21,8 @@ module Top(
     wire [31:0] branch_target;
     wire [31:0] jalr_target;
 
+    wire [31:0] immediate;
+
     assign pc_plus4     = PC_out + 32'd4;
     assign branch_target = PC_out + immediate;
     assign jalr_target   = {ALU_result[31:1], 1'b0};
@@ -56,7 +58,7 @@ module Top(
 
     wire [31:0] Read_data1;
     wire [31:0] Read_data2;
-    wire [31:0] immediate;
+    
 
     ImmediateGenerator imm_gen (
         .instruction(instruction),

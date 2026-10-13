@@ -44,7 +44,7 @@
 
 00108463  // BEQ  x1, x1, +8    ; taken: skip next instruction
 06300A13  // ADDI x20, x0, 99   ; must be skipped
-00700A93  // ADDI x21, x0, 7    ; branch target
+00700A93  // ADDI x21, x0, 36   ; branch target
 
 00109463  // BNE  x1, x1, +8    ; not taken
 00900B13  // ADDI x22, x0, 9    ; must execute

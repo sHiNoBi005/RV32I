@@ -212,7 +212,7 @@ vvp sim/control_unit_tb.vvp
 ### 4. Run the top-level smoke test
 
 ```sh
-iverilog -g2012 -s Top_tb -o sim/top_tb.vvp rtl/*.v tb/top_tb.v
+iverilog -g2012 -o ./sim/top_test ./tb/top_tb.v ./rtl/*.v
 vvp sim/top_tb.vvp
 ```
 
