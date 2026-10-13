@@ -23,15 +23,23 @@ module Top_tb;
             uut.ALU_result, uut.RegWrite
         );
 
-        // Reset the processor before initializing the source registers.
+        // Release reset after two clock edges.
         repeat (2) @(posedge clk);
         #1;
         reset = 0;
 
-        uut.register_file.registers[1] = 32'd20;
-        uut.register_file.registers[2] = 32'd3;
+        // Initialize registers used by the sample program.
+        uut.register_file.registers[1]  = 32'd20;
+        uut.register_file.registers[2]  = 32'd3;
+        uut.register_file.registers[14] = 32'h80000000;
+        uut.register_file.registers[15] = 32'd1;
+        uut.register_file.registers[16] = 32'h00000080;
+        uut.register_file.registers[17] = 32'hFFFF80FF;
 
-        #100;
+        // Run until the final JALR instruction is executed.
+        wait (uut.PC_out == 32'd144);
+        @(posedge clk);
+        #1;
         $finish;
     end
 
