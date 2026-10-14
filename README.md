@@ -1,276 +1,217 @@
-# RV32I Processor
+# RV32I Single-Cycle Processor
 
-A **32-bit RISC-V processor built in Verilog**, designed to make the journey from an instruction to its result easy to understand.
-
-This project brings together instruction fetching, decoding, arithmetic, memory access, branching, and register write-back in one compact design.
+A 32-bit RISC-V processor subset implemented in Verilog. This project connects instruction fetch, instruction decoding, register reads, ALU execution, data-memory access, register writeback, conditional branches, and jumps in one single-cycle datapath.
 
 ![Language](https://img.shields.io/badge/Language-Verilog-blue)
-![Architecture](https://img.shields.io/badge/Architecture-RISC--V%2032--bit-orange)
-![Focus](https://img.shields.io/badge/Focus-Learning%20%26%20Simulation-success)
+![Architecture](https://img.shields.io/badge/Architecture-RV32I-orange)
+![Verification](https://img.shields.io/badge/Testbenches-Passed-success)
 
-> **New to Verilog?** Start with the [Verilog Syntax Guide](VERILOG_GUIDE.md). It explains the syntax and concepts used in this project in plain language, with examples.
+> New to Verilog? Start with the [Verilog Syntax Guide](VERILOG_GUIDE.md).
 
 ## Contents
 
-- [What this project does](#what-this-project-does)
-- [How one instruction moves through the processor](#how-one-instruction-moves-through-the-processor)
-- [A worked example: ADD](#a-worked-example-add)
-- [How the next instruction is chosen](#how-the-next-instruction-is-chosen)
+- [Architecture overview](#architecture-overview)
+- [Instruction workflow](#instruction-workflow)
+- [Control flow](#control-flow)
 - [Instruction support](#instruction-support)
-- [Project layout](#project-layout)
-- [Run a simulation](#run-a-simulation)
-- [Testbenches](#testbenches)
-- [Current scope and limitations](#current-scope-and-limitations)
-- [Development workflow](#development-workflow)
-- [Learn the Verilog used here](#learn-the-verilog-used-here)
+- [Project structure](#project-structure)
+- [Run the simulations](#run-the-simulations)
+- [Test coverage](#test-coverage)
 
-## What this project does
+## Architecture overview
 
-The design is a compact, single-cycle-style processor datapath. The main calculations happen between clock edges, and state such as the program counter and register-file contents is updated on a rising clock edge.
+The top-level module is **Top** in **rtl/Top.v**. It connects the modules below.
 
-The processor fetches 32-bit instructions from `programs/instructions.mem`, executes supported instructions, and updates registers or data memory as required. Its control-flow logic supports conditional branches and jumps.
+| Module | Responsibility |
+| --- | --- |
+| **ProgramCounter** | Holds PC_out and updates it with PC_in on a rising clock edge; reset sets the PC to zero. |
+| **InstructionMemory** | Fetches the 32-bit instruction at the current PC from programs/instructions.mem. |
+| **ControlUnit** | Decodes the opcode and function fields and generates control signals. |
+| **Register_File** | Provides two asynchronous register reads and a synchronous write port. Register x0 always reads as zero and ignores writes. |
+| **ImmediateGenerator** | Builds sign-extended or shifted immediates for I, S, B, U and J instruction formats. |
+| **ALU** | Performs arithmetic, logical, shift, and signed/unsigned comparison operations. It also calculates load/store addresses. |
+| **BranchComp** | Compares source-register values for BEQ, BNE, BLT, BGE, BLTU and BGEU. |
+| **Data_Memory** | Supports byte, halfword and word loads and stores. |
+| **Top** | Integrates the datapath, writeback selection, and next-PC control. |
 
-Each major job has a separate Verilog module. That makes the project easier to read, test, explain, and extend.
+### Datapath diagram
 
-## How one instruction moves through the processor
-
-An instruction is a 32-bit value that tells the processor what to do. The processor interprets that value, gathers the required data, performs the operation, and decides what address to fetch next.
-
-The flowchart below shows the main path. Some work happens in parallel: for example, the control unit decodes the instruction while the register file and immediate generator prepare values. Not every instruction uses every block.
-
-```mermaid
-flowchart TD
-    PC["Program Counter (PC)<br/>current instruction address"] --> IM["Instruction Memory<br/>fetch 32-bit instruction"]
-    IM --> DEC["Decode instruction fields<br/>opcode, rs1, rs2, rd, function bits"]
-
-    DEC --> CU["Control Unit<br/>operation and control signals"]
-    DEC --> RF["Register File<br/>read rs1/rs2; write rd on clock edge"]
-    DEC --> IG["Immediate Generator<br/>build immediate or offset"]
-
-    CU --> ALUSetup["Select ALU operation and operands"]
-    RF --> ALUSetup
-    IG --> ALUSetup
-    ALUSetup --> ALU["ALU<br/>arithmetic, logic, address calculation"]
-
-    RF -- "register values + func3" --> BC["Branch Comparator<br/>check the branch condition"]
-    BC -- "branch_taken: true / false" --> NPC
-    CU -- "branch, jump, jalr controls" --> NPC
-
-    ALU --> DM["Data Memory<br/>load reads data; store writes data"]
-    RF -- "store value" --> DM
-    CU -- "MemRead / MemWrite" --> DM
-
-    ALU -- "ALU result" --> WB["Write-back selection"]
-    DM -- "loaded data" --> WB
-    PC4["PC + 4<br/>return address for JAL/JALR"] --> WB
-    CU -- "RegWrite and result selection" --> WB
-    WB -- "write data" --> RF
-    CU -- "RegWrite enable" --> RF
-
-    PC --> PC4
-    PC --> BT["Branch/JAL target calculation<br/>current PC + immediate"]
-    IG --> BT
-    BT -- "relative target" --> NPC
-    ALU -- "rs1 + immediate" --> JT["JALR target<br/>clear bit 0"]
-    JT --> NPC
-    PC4 --> NPC
-
-    NPC{"Next-PC selection<br/>JALR has priority, then JAL,<br/>taken branch, otherwise PC + 4"}
-    NPC --> PCUpdate["At rising clock edge:<br/>PC takes the selected next address"]
-    PCUpdate --> PC
-```
-
-### Processor datapath diagram
+The repository's datapath illustration is available here:
 
 ![Processor datapath diagram](docs/images/processor-datapath.png)
 
-*Figure: a high-level view of the processor's data paths and control signals.*
+The 32-bit **instruction** output from InstructionMemory fans out to instruction-field decoding and ImmediateGenerator. The source-register values feed the ALU and BranchComp. The ALU result is used as a load/store address and as a possible writeback value.
 
-> **Reading this diagram:** The drawing is an architectural reference, so some labels such as `PCSrc`, `ResultSrc`, and `ImmSrc` are conceptual and do not exactly match the names or widths used in the current RTL. In the current implementation, the separate `BranchComp` module outputs `br_taken`, connected as `branch_taken` in `rtl/Top.v`. That result is combined with the Control Unit's `branch` signal in next-PC selection.
+## Instruction workflow
 
-### The main parts in plain language
+The processor is described using five logical stages, but it is **not a five-stage pipeline**. An instruction's combinational datapath runs within one clock cycle; state updates occur at the rising clock edge.
 
-| Part | Its job |
-| --- | --- |
-| **Program Counter (PC)** | Remembers the address of the current instruction. |
-| **Instruction Memory** | Finds the instruction stored at that address. |
-| **Control Unit** | Recognizes the instruction and tells the other blocks what to do. |
-| **Register File** | Holds the processor's 32 general-purpose registers, `x0` through `x31`. |
-| **Immediate Generator** | Extracts a number or offset packed inside an instruction and expands it to 32 bits. |
-| **ALU** | Performs arithmetic and bit operations, and calculates addresses. |
-| **Branch Comparator** | Checks conditions such as equal, not equal, less than, and greater than or equal. |
-| **Data Memory** | Holds data that load and store instructions read or write. |
-| **Write-back selection** | Chooses which value, if any, should be written to a destination register. |
-
-### What does “one cycle” mean here?
-
-Most calculation and selection logic reacts to the current signals during the cycle. On the rising edge of the clock, the PC and any enabled register-file or data-memory writes update. The new PC then points to the instruction for the next cycle.
-
-A store changes data memory at the clock edge but does not write a general-purpose register. A branch usually does not write a register; it affects which PC value is selected. Loads write the value read from data memory. Most arithmetic instructions write the ALU result.
-
-## A worked example: `ADD x3, x1, x2`
-
-The first entry in `programs/instructions.mem` is:
-
-```text
-002081B3  // ADD x3, x1, x2
+```mermaid
+flowchart TD
+    PC["ProgramCounter<br/>PC_out"] --> IM["InstructionMemory<br/>instruction[31:0]"]
+    IM --> DECODE["Decode instruction fields"]
+    DECODE --> CU["ControlUnit"]
+    DECODE --> RF["Register_File"]
+    IM --> IG["ImmediateGenerator"]
+    CU --> ALUCFG["Select ALU operation / operands"]
+    RF --> ALUCFG
+    IG --> ALUCFG
+    ALUCFG --> ALU["ALU"]
+    RF --> BC["BranchComp"]
+    CU --> PCMUX["Next-PC selection"]
+    BC -->|"branch_taken"| PCMUX
+    CU -->|"branch, jump, jalr controls"| PCMUX
+    PC --> PC4["PC_plus4 = PC_out + 4"]
+    PC --> BT["branch_target = PC_out + immediate"]
+    IG --> BT
+    ALU --> JT["jalr_target = {ALU_result[31:1], 1'b0}"]
+    BT --> PCMUX
+    JT --> PCMUX
+    PC4 --> PCMUX
+    PCMUX -->|"PC_next"| PC
+    ALU --> DM["Data_Memory"]
+    RF -->|"Read_data2 / store data"| DM
+    DM -->|"memory_read_data"| WB["Writeback selection"]
+    ALU -->|"ALU_result"| WB
+    PC4 -->|"JAL/JALR link"| WB
+    CU -->|"MemRead / MemWrite"| DM
+    CU -->|"RegWrite"| RF
+    WB -->|"writeback_data"| RF
 ```
 
-It means: **add the value in register `x1` to the value in register `x2`, then save the result in `x3`.**
+### Stage-by-stage summary
 
-The current top-level smoke test seeds `x1 = 20` and `x2 = 3` directly from the testbench so the example has known starting values.
+1. **Fetch:** ProgramCounter supplies PC_out; InstructionMemory reads the instruction. PC_plus4 is calculated for sequential execution and jump-link values.
+2. **Decode:** instruction fields are extracted; ControlUnit, Register_File, and ImmediateGenerator prepare the required controls and operands.
+3. **Execute:** ALU performs the selected operation, calculates effective addresses, and supplies the JALR base-plus-offset result. BranchComp evaluates branch conditions.
+4. **Memory:** Data_Memory reads load data or writes store data when enabled.
+5. **Register writeback:** the writeback selection supplies ALU_result, memory_read_data, or PC_plus4 for JAL/JALR to the register file.
 
-| Step | What happens | Value in this example |
-| --- | --- | --- |
-| 1. Fetch | PC is 0, so instruction memory returns the first instruction. | Instruction = `002081B3` |
-| 2. Decode | The control unit recognizes an R-type ADD and enables register write-back. | Destination = `x3`; sources = `x1`, `x2` |
-| 3. Read | The register file supplies both source values. | `x1 = 20`, `x2 = 3` |
-| 4. Execute | The ALU performs addition. | `20 + 3 = 23` |
-| 5. Choose result | This is not a load or jump, so the ALU result is selected. | Write-back value = `23` |
-| 6. Clock edge | The enabled write stores 23 in `x3`; the PC advances. | `x3 = 23`, next PC = `4` |
+## Control flow
 
-The testbench checks whether `x3` becomes 23. If it does not, the test fails. The next instruction is then available at address 4.
+The current next-PC selection logic in rtl/Top.v uses this priority:
 
-The same structure works for other instructions, but the details differ. For example, `LW` calculates a memory address using a base register and an offset, reads data memory, and writes the loaded value to a register instead of writing the ALU's address calculation.
+1. **JALR:** jalr_target = {ALU_result[31:1], 1'b0}.
+2. **JAL:** branch_target = PC_out + immediate, using the J-type immediate.
+3. **Taken conditional branch:** choose branch_target when branch and branch_taken are both true.
+4. **Sequential execution:** otherwise choose PC_plus4 = PC_out + 4.
 
-## How the next instruction is chosen
-
-The current design uses this priority when selecting the next PC:
-
-1. **JALR** — Use `rs1 + immediate` as the target, with bit 0 cleared.
-2. **JAL** — Use the current PC plus the J-type offset.
-3. **Taken conditional branch** — Use the current PC plus the B-type offset when the comparison is true.
-4. **Normal flow** — If none of the above applies, use `PC + 4`.
-
-JAL and JALR also save `PC + 4` in their destination register. This value is the return address: it points to the instruction after the jump.
+BranchComp supports all six conditional branch instructions: BEQ, BNE, BLT, BGE, BLTU and BGEU. RegWrite enables destination-register updates. Loads select memory_read_data; ordinary arithmetic and logical operations select ALU_result; JAL and JALR write PC_plus4 as their link value.
 
 ## Instruction support
 
-The control and datapath logic currently covers these instruction groups:
+The control and datapath logic supports the following instruction groups:
 
-| Group | Instructions | Purpose |
-| --- | --- | --- |
-| Integer arithmetic and logic | ADD, SUB, SLL, SLT, SLTU, XOR, SRL, SRA, OR, AND | Operate on register values |
-| Immediate arithmetic and logic | ADDI, SLLI, SLTI, SLTIU, XORI, SRLI, SRAI, ORI, ANDI | Operate on a register and an immediate |
-| Loads | LB, LH, LW, LBU, LHU | Read byte, halfword, or word data |
-| Stores | SB, SH, SW | Write byte, halfword, or word data |
-| Conditional branches | BEQ, BNE, BLT, BGE, BLTU, BGEU | Choose a path based on a comparison |
-| Upper-immediate | LUI, AUIPC | Build an upper constant or add it to the PC |
-| Jumps | JAL, JALR | Change control flow and save a return address |
+| Group | Instructions |
+| --- | --- |
+| Register arithmetic and logic | ADD, SUB, SLL, SLT, SLTU, XOR, SRL, SRA, OR, AND |
+| Immediate arithmetic and logic | ADDI, SLLI, SLTI, SLTIU, XORI, SRLI, SRAI, ORI, ANDI |
+| Loads | LB, LH, LW, LBU, LHU |
+| Stores | SB, SH, SW |
+| Conditional branches | BEQ, BNE, BLT, BGE, BLTU, BGEU |
+| Upper immediate | LUI, AUIPC |
+| Jumps | JAL, JALR |
 
-This is a **subset of RV32I**, not a claim that every part of the RISC-V specification is implemented.
+The sample program in programs/instructions.mem exercises arithmetic and logical operations, memory access, LUI/AUIPC, conditional branches, and JALR. InstructionMemory loads this file using $readmemh; edit instruction encodings in that file rather than duplicating them inside a testbench.
 
-## Project layout
+## Project structure
 
 ```text
 .
 ├── programs/
-│   └── instructions.mem      # Program loaded into instruction memory
+│   └── instructions.mem       # Instruction program loaded by InstructionMemory
 ├── rtl/
-│   ├── ALU.v                 # Arithmetic and logic operations
-│   ├── BranchComp.v          # Conditional branch comparisons
-│   ├── ControlUnit.v         # Instruction decoding and control signals
-│   ├── DataMemory.v          # Loads and stores
-│   ├── ImmediateGenerator.v  # Builds instruction immediates
-│   ├── InstructionMemory.v   # Fetches instructions
-│   ├── ProgramCounter.v      # Stores the current instruction address
-│   ├── RegisterFile.v        # General-purpose registers
-│   └── Top.v                 # Connects the processor modules
-├── tb/                       # Testbenches for individual modules and Top
-├── docs/
-│   └── images/
-│       └── processor-datapath.png # Processor datapath reference
-├── README.md                 # Project overview and processor walkthrough
-└── VERILOG_GUIDE.md          # Plain-language guide to Verilog syntax
+│   ├── ALU.v
+│   ├── BranchComp.v
+│   ├── ControlUnit.v
+│   ├── DataMemory.v
+│   ├── ImmediateGenerator.v
+│   ├── InstructionMemory.v
+│   ├── ProgramCounter.v
+│   ├── RegisterFile.v
+│   └── Top.v                  # Complete integrated datapath
+├── tb/
+│   ├── ALU_tb.v
+│   ├── BranchComp_tb.v
+│   ├── ControlUnit_tb.v
+│   ├── DataMemory_tb.v
+│   ├── ImmediateGenerator_tb.v
+│   ├── InstructionMemory_tb.v
+│   ├── ProgramCounter_tb.v
+│   ├── RegisterFile_tb.v
+│   └── top_tb.v               # Top-level program run
+├── docs/images/
+│   └── processor-datapath.png
+├── README.md
+└── VERILOG_GUIDE.md
 ```
 
-Each `*_tb.v` file is a testbench for a module. The top-level testbench is named `Top_tb` inside `tb/top_tb.v`.
+The file names are DataMemory.v and RegisterFile.v, while their module names are Data_Memory and Register_File.
 
-## Run a simulation
+## Run the simulations
 
-The examples below use [Icarus Verilog](https://steveicarus.github.io/iverilog/) to compile and run the testbenches. Run commands from the **repository root**, because instruction memory loads `programs/instructions.mem` using a relative path.
+Install [Icarus Verilog](https://steveicarus.github.io/iverilog/). Run all commands from the **repository root** because InstructionMemory loads programs/instructions.mem using a relative path.
 
-### 1. Install the tools
+### Top-level integration run
 
-Install Icarus Verilog. GTKWave is optional and can be used to inspect waveforms.
+The top-level testbench initializes source registers and executes the program through the final JALR instruction.
 
-### 2. Create a folder for simulation outputs
-
-```sh
+```bash
 mkdir -p sim
+iverilog -g2012 -s Top_tb -o sim/top_tb rtl/*.v tb/top_tb.v
+vvp sim/top_tb
 ```
 
-### 3. Run a unit test
+### Individual module testbenches
 
-For example, to test the control unit:
+Run the module testbenches individually:
 
-```sh
-iverilog -g2012 -s ControlUnit_tb -o sim/control_unit_tb.vvp rtl/ControlUnit.v tb/ControlUnit_tb.v
-vvp sim/control_unit_tb.vvp
+```bash
+mkdir -p sim
+
+iverilog -g2012 -s ALU_tb -o sim/alu_tb rtl/ALU.v tb/ALU_tb.v
+vvp sim/alu_tb
+
+iverilog -g2012 -s BranchComp_tb -o sim/branchcomp_tb rtl/BranchComp.v tb/BranchComp_tb.v
+vvp sim/branchcomp_tb
+
+iverilog -g2012 -s ControlUnit_tb -o sim/controlunit_tb rtl/ControlUnit.v tb/ControlUnit_tb.v
+vvp sim/controlunit_tb
+
+iverilog -g2012 -s DataMemory_tb -o sim/datamemory_tb rtl/DataMemory.v tb/DataMemory_tb.v
+vvp sim/datamemory_tb
+
+iverilog -g2012 -s ImmediateGenerator_tb -o sim/immediate_tb rtl/ImmediateGenerator.v tb/ImmediateGenerator_tb.v
+vvp sim/immediate_tb
+
+iverilog -g2012 -s InstructionMemory_tb -o sim/instructionmemory_tb rtl/InstructionMemory.v tb/InstructionMemory_tb.v
+vvp sim/instructionmemory_tb
+
+iverilog -g2012 -s ProgramCounter_tb -o sim/programcounter_tb rtl/ProgramCounter.v tb/ProgramCounter_tb.v
+vvp sim/programcounter_tb
+
+iverilog -g2012 -s RegisterFile_tb -o sim/registerfile_tb rtl/RegisterFile.v tb/RegisterFile_tb.v
+vvp sim/registerfile_tb
 ```
 
-### 4. Run the top-level smoke test
+> Run from the repository root so the memory image is found. Testbenches may create VCD waveform files; open them with GTKWave to inspect signals over time.
 
-```sh
-iverilog -g2012 -o ./sim/top_test ./tb/top_tb.v ./rtl/*.v
-vvp sim/top_tb.vvp
-```
+## Test coverage
 
-The current top-level test checks reset, instruction fetch for the first instruction, and the result of an ADD operation. It is a smoke test, not a full run of the program.
+The project testbenches cover the core modules and top-level program flow. The project author has run the testbenches and confirmed that they pass.
 
-### 5. Inspect waveforms (optional)
-
-Testbenches generate `.vcd` waveform files. Open a generated waveform in GTKWave to inspect signals over time. Some testbenches write their waveform directly to the repository root, while others write under `sim/`.
-
-### Available testbenches
-
-| Testbench | Module covered |
-| --- | --- |
-| `tb/ALU_tb.v` | ALU operations |
-| `tb/BranchComp_tb.v` | Branch comparisons |
-| `tb/ControlUnit_tb.v` | Control signals, including valid and invalid JALR encodings |
-| `tb/DataMemory_tb.v` | Load/store data-memory behavior |
-| `tb/ImmediateGenerator_tb.v` | Immediate generation |
-| `tb/InstructionMemory_tb.v` | Instruction fetch |
-| `tb/ProgramCounter_tb.v` | PC reset and updates |
-| `tb/RegisterFile_tb.v` | Register-file behavior |
-| `tb/top_tb.v` | Basic processor integration smoke test |
-
-The testbenches are currently run individually; there is not yet a single command that runs the full suite.
-
-## Current scope and limitations
-
-- The processor implements a subset of RV32I. Unsupported encodings do not have a complete architectural exception-handling path.
-- JALR clears bit 0 of the calculated target, as the instruction requires. The project does not yet implement instruction-address-misaligned exceptions. The current sample ends with `JALR x20, 0(x21)`; the preceding program sets `x21 = 7`, producing target address 6 after bit 0 is cleared. Address 6 is not 4-byte aligned, so that sample is not yet a valid end-to-end JALR demonstration. A dedicated test should use an aligned target.
-- The current top-level testbench does not yet run the complete program or verify JAL/JALR execution end to end.
-- Simulation results should not be treated as passing until the relevant testbenches have been run with a Verilog simulator.
-
-## Development workflow
-
-When adding or changing an instruction, use a small repeatable workflow:
-
-1. **Update the RTL** — Make the smallest change in the relevant module or modules.
-2. **Add or update a unit test** — Check decoding, immediate generation, ALU behavior, memory access, or comparison as appropriate.
-3. **Run the relevant testbench** — Then run the top-level smoke test to catch basic integration problems.
-4. **Inspect waveforms when useful** — Follow signals such as PC, instruction, ALU result, and write-back data.
-5. **Commit a focused change** — Use a clear commit message and keep unrelated edits separate.
-6. **Update documentation** — Keep instruction support, commands, examples, and known limitations accurate.
+- **ALU:** arithmetic, logic, shifts, and comparisons.
+- **BranchComp:** equality, inequality, signed and unsigned comparisons.
+- **ControlUnit:** control-signal decoding for supported instruction groups.
+- **Data_Memory:** LB/LH/LW/LBU/LHU and SB/SH/SW behavior.
+- **ImmediateGenerator:** I, S, B, U and J immediate construction.
+- **InstructionMemory / ProgramCounter / Register_File:** instruction reads, PC updates, register reads/writes, and x0 behavior.
+- **Top-level program:** ALU operations, memory instructions, LUI/AUIPC, taken and not-taken branches, skipped instructions, and JALR link/redirect flow.
 
 ## Learn the Verilog used here
 
-The companion guide, **[VERILOG_GUIDE.md](VERILOG_GUIDE.md)**, explains the syntax and coding patterns used in this repository, including:
-
-- `wire` versus `reg`
-- `assign`, `always @(*)`, and clocked `always @(posedge clk)`
-- Blocking `=` versus non-blocking `<=` assignments
-- Bit widths, number bases, bit selection, and concatenation
-- `if`, `case`, operators, arrays, and loops
-- Module instances and named port connections
-- Testbenches, clock generation, timing delays, assertions, and waveforms
-- A worked explanation of `ADD x3, x1, x2`
-
-The aim is that you can explain not just what a line says, but why it is written that way and how it helps the processor work.
+The companion [VERILOG_GUIDE.md](VERILOG_GUIDE.md) explains the syntax and coding patterns used in this repository, including wires and registers, combinational and clocked always blocks, assignment operators, bit slicing, concatenation, module instantiation, testbenches, clocks, assertions, and waveform debugging.
 
 ---
 
-Built as a learning-focused Verilog processor project. The design and documentation will evolve together as more instruction behavior and verification are added.
+Built as a learning-focused Verilog processor project. The RTL, program image, tests, and documentation are intended to evolve together.
